@@ -16,7 +16,7 @@ scan:
   scanners:
     - vuln
     - secret
-#    - misconfig
+  #    - misconfig
 
   skip-dirs:
     - .idea
