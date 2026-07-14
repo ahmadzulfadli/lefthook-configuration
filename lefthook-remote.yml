@@ -15,7 +15,7 @@ pre-commit:
       glob: "*.{java,xml,yml,yaml,properties}"
       run: >
         semgrep scan
-        --config {remote}/semgrep/rules/
+        --config .git/info/lefthook-remotes/lefthook-configuration-master/semgrep/rules/
         --error
         --severity ERROR
         --timeout 60
@@ -41,8 +41,8 @@ pre-commit:
       glob: "*.{java,xml,properties,gradle,yml,yaml,Dockerfile}"
       run: >
         trivy fs
-        --config {remote}/trivy/trivy.yaml
-        --ignorefile {remote}/trivy/.trivyignore
+        --config .git/info/lefthook-remotes/lefthook-configuration-master/trivy/trivy.yaml
+        --ignorefile .git/info/lefthook-remotes/lefthook-configuration-master/trivy/.trivyignore
         .
       fail_text: "Trivy found HIGH/CRITICAL vulnerabilities or secrets! Review findings above. If false positive, add to .trivyignore with justification."
 
