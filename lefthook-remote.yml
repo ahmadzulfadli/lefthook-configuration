@@ -1,7 +1,6 @@
 # =============================================================================
-# Lefthook Remote Configuration - Pre-commit Hooks
+# Lefthook Configuration - Pre-commit Hooks
 # Tools: Semgrep (SAST) + Trivy (Vulnerability Scanner) + Maven Test
-# This file is referenced by consumer projects via Lefthook remotes.
 # =============================================================================
 
 pre-commit:
@@ -11,29 +10,29 @@ pre-commit:
     # -------------------------------------------------------------------------
     # Semgrep - Static Application Security Testing (SAST)
     # -------------------------------------------------------------------------
-   semgrep:
-     glob: "*.{java,xml,yml,yaml,properties}"
-     run: >
-       semgrep scan
-       --config {remote}/semgrep/rules/
-       --error
-       --severity ERROR
-       --timeout 60
-       --no-git-ignore
-       --exclude="target"
-       --exclude="build"
-       --exclude=".gradle"
-       --exclude=".mvn"
-       --exclude="node_modules"
-       --exclude="**/generated/**"
-       --exclude="**/generated-sources/**"
-       --exclude=".idea"
-       --exclude=".vscode"
-       --exclude="**/src/test/**"
-       --exclude="loadtests"
-       {staged_files}
-     fail_text: |
-       Semgrep found security issues! Fix findings above before committing.
+    semgrep:
+      glob: "*.{java,xml,yml,yaml,properties}"
+      run: >
+        semgrep scan
+        --config lefthook/semgrep/rules/
+        --error
+        --severity ERROR
+        --timeout 60
+        --no-git-ignore
+        --exclude="target"
+        --exclude="build"
+        --exclude=".gradle"
+        --exclude=".mvn"
+        --exclude="node_modules"
+        --exclude="**/generated/**"
+        --exclude="**/generated-sources/**"
+        --exclude=".idea"
+        --exclude=".vscode"
+        --exclude="**/src/test/**"
+        --exclude="loadtests"
+        {staged_files}
+      fail_text: |
+        Semgrep found security issues! Fix findings above before committing.
 
     # -------------------------------------------------------------------------
     # Trivy - Vulnerability & Secret Scanner
@@ -42,8 +41,8 @@ pre-commit:
       glob: "*.{java,xml,properties,gradle,yml,yaml,Dockerfile}"
       run: >
         trivy fs
-        --config {remote}/trivy/trivy.yaml
-        --ignorefile {remote}/trivy/.trivyignore
+        --config lefthook/trivy/trivy.yaml
+        --ignorefile lefthook/trivy/.trivyignore
         .
       fail_text: |
         Trivy found HIGH/CRITICAL vulnerabilities or secrets!
@@ -52,8 +51,8 @@ pre-commit:
     # -------------------------------------------------------------------------
     # Maven Test - Unit tests
     # -------------------------------------------------------------------------
-#    test:
-#      glob: "*.{java,xml}"
-#      run: mvn test -q -B
-#      fail_text: |
-#        Unit tests failed! Run `mvn test` to see details.
+    test:
+      glob: "*.{java,xml}"
+      run: mvn test -q -B
+      fail_text: |
+        Unit tests failed! Run `mvn test` to see details.
