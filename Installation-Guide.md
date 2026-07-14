@@ -32,3 +32,10 @@ lefthook install
 # Run pre-commit job
 lefthook run pre-commit
 ```
+
+# Delete cache
+```bash
+Remove-Item -Recurse -Force .git\info\lefthook-remotes
+Remove-Item -Force .git\info\lefthook.checksum
+lefthook install
+```
