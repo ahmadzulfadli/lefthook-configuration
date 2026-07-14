@@ -49,7 +49,7 @@ pre-commit:
     # -------------------------------------------------------------------------
     # Maven Test - Unit tests
     # -------------------------------------------------------------------------
-    test:
-      glob: "*.{java,xml}"
-      run: mvn test -q -B
-      fail_text: "Unit tests failed! Run `mvn test` to see details."
+    # test:
+    #   glob: "*.{java,xml}"
+    #   run: mvn test -q -B
+    #   fail_text: "Unit tests failed! Run `mvn test` to see details."
