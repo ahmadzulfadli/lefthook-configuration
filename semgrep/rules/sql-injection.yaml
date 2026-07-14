@@ -1,0 +1,198 @@
+# =============================================================================
+# Semgrep Custom Rules - SQL Injection Prevention (Combined)
+# Untuk Java/Spring Boot projects
+# Menggabungkan taint analysis dengan cakupan JPA/Spring Data sinks
+# Ref: https://github.com/semgrep/semgrep-rules/blob/develop/java/spring/security/injection/tainted-sql-string.yaml
+# =============================================================================
+rules:
+  # ---------------------------------------------------------------------------
+  # Taint-based SQL Injection Detection
+  # Melacak data flow dari user input ke SQL construction/execution
+  # ---------------------------------------------------------------------------
+  - id: tainted-sql-injection
+    languages:
+      - java
+    severity: ERROR
+    message: >
+      User data flows into this manually-constructed SQL string. User data
+      can be safely inserted into SQL strings using prepared statements or an
+      object-relational mapper (ORM). Manually-constructed SQL strings is a
+      possible indicator of SQL injection, which could let an attacker steal or
+      manipulate data from the database. Instead, use prepared statements
+      (`connection.PreparedStatement`) or parameter binding (`:param`, `?1`).
+    metadata:
+      cwe:
+        - "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+      owasp:
+        - A01:2017 - Injection
+        - A03:2021 - Injection
+        - A05:2025 - Injection
+      references:
+        - https://docs.oracle.com/javase/7/docs/api/java/sql/PreparedStatement.html
+        - https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html
+      category: security
+      technology:
+        - spring
+        - jpa
+        - hibernate
+      cwe2022-top25: true
+      cwe2021-top25: true
+      subcategory:
+        - vuln
+      likelihood: HIGH
+      impact: HIGH
+      confidence: MEDIUM
+      interfile: true
+    options:
+      taint_assume_safe_numbers: true
+      taint_assume_safe_booleans: true
+      interfile: true
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  $METHODNAME(..., @$REQ(...) $TYPE $SOURCE,...) {
+                    ...
+                  }
+              - pattern-inside: |
+                  $METHODNAME(..., @$REQ $TYPE $SOURCE,...) {
+                    ...
+                  }
+          - metavariable-regex:
+              metavariable: $REQ
+              regex: (RequestBody|PathVariable|RequestParam|RequestHeader|CookieValue)
+          - metavariable-regex:
+              metavariable: $TYPE
+              regex: ^(?!(Integer|Long|Float|Double|Char|Boolean|int|long|float|double|char|boolean))
+          - focus-metavariable: $SOURCE
+    pattern-sinks:
+      # ----- String concatenation sinks (SQL construction) -----
+      - patterns:
+          - pattern-either:
+              # Direct string concatenation: "SELECT ..." + input
+              - pattern: |
+                  "$SQLSTR" + ...
+              # String.concat()
+              - pattern: |
+                  "$SQLSTR".concat(...)
+              # StringBuilder
+              - patterns:
+                  - pattern-inside: |
+                      StringBuilder $SB = new StringBuilder("$SQLSTR");
+                      ...
+                  - pattern: $SB.append(...)
+              # += operator
+              - patterns:
+                  - pattern-inside: |
+                      $VAR = "$SQLSTR";
+                      ...
+                  - pattern: $VAR += ...
+              # String.format with literal
+              - pattern: String.format("$SQLSTR", ...)
+              # String.format with variable
+              - patterns:
+                  - pattern-inside: |
+                      String $VAR = "$SQLSTR";
+                      ...
+                  - pattern: String.format($VAR, ...)
+          - pattern-not-inside: System.out.println(...)
+          - pattern-not-inside: $LOG.info(...)
+          - pattern-not-inside: $LOG.warn(...)
+          - pattern-not-inside: $LOG.warning(...)
+          - pattern-not-inside: $LOG.debug(...)
+          - pattern-not-inside: $LOG.debugging(...)
+          - pattern-not-inside: $LOG.error(...)
+          - pattern-not-inside: $LOG.trace(...)
+          - pattern-not-inside: new Exception(...)
+          - pattern-not-inside: new RuntimeException(...)
+          - pattern-not-inside: throw ...;
+          - metavariable-regex:
+              metavariable: $SQLSTR
+              regex: (?i)(select|delete|insert|create|update|alter|drop)\b
+      # ----- JDBC execution sinks -----
+      - patterns:
+          - pattern-either:
+              - pattern: (java.sql.Statement $STMT).executeQuery(...)
+              - pattern: (java.sql.Statement $STMT).execute(...)
+              - pattern: (java.sql.Statement $STMT).executeUpdate(...)
+              - pattern: $STMT.executeQuery(...)
+              - pattern: $STMT.executeUpdate(...)
+              - pattern: $STMT.execute(...)
+          - pattern-not-inside: System.out.println(...)
+          - pattern-not-inside: $LOG.info(...)
+          - pattern-not-inside: $LOG.error(...)
+      # ----- JPA / EntityManager sinks -----
+      - patterns:
+          - pattern-either:
+              - pattern: $EM.createQuery(...)
+              - pattern: $EM.createNativeQuery(...)
+              - pattern: (javax.persistence.EntityManager $EM).createQuery(...)
+              - pattern: (javax.persistence.EntityManager $EM).createNativeQuery(...)
+              - pattern: (jakarta.persistence.EntityManager $EM).createQuery(...)
+              - pattern: (jakarta.persistence.EntityManager $EM).createNativeQuery(...)
+          - pattern-not-inside: System.out.println(...)
+          - pattern-not-inside: $LOG.info(...)
+          - pattern-not-inside: $LOG.error(...)
+      # ----- Spring JdbcTemplate sinks -----
+      - patterns:
+          - pattern-either:
+              - pattern: $JDBC.queryForObject(...)
+              - pattern: $JDBC.queryForList(...)
+              - pattern: $JDBC.queryForMap(...)
+              - pattern: $JDBC.query(...)
+              - pattern: $JDBC.update(...)
+              - pattern: $JDBC.execute(...)
+              - pattern: (org.springframework.jdbc.core.JdbcTemplate $JDBC).queryForObject(...)
+              - pattern: (org.springframework.jdbc.core.JdbcTemplate $JDBC).query(...)
+              - pattern: (org.springframework.jdbc.core.JdbcTemplate $JDBC).update(...)
+          - pattern-not-inside: System.out.println(...)
+          - pattern-not-inside: $LOG.info(...)
+          - pattern-not-inside: $LOG.error(...)
+    pattern-sanitizers:
+      - pattern: (int) $X
+      - pattern: Integer.parseInt(...)
+      - pattern: Long.parseLong(...)
+      - pattern: Double.parseDouble(...)
+      - pattern: Float.parseFloat(...)
+      - pattern: Math.$METHOD(...)
+      - pattern: $X.trim()
+      - patterns:
+          - pattern: $X.replaceAll($RE, ...)
+          - metavariable-regex:
+              metavariable: $RE
+              regex: .*[^a-zA-Z0-9].*
+
+  # ---------------------------------------------------------------------------
+  # Spring Data @Query with concatenation (annotation-level detection)
+  # Ini tidak bisa dideteksi oleh taint mode karena terjadi di level anotasi
+  # ---------------------------------------------------------------------------
+  - id: spring-data-raw-native-query
+    patterns:
+      - pattern-either:
+          - pattern: |
+              @Query(value = $QUERY + $VAR, nativeQuery = true)
+          - pattern: |
+              @Query(value = $QUERY + $VAR + ..., nativeQuery = true)
+    message: >
+      Native query in @Query annotation menggunakan string concatenation.
+      Gunakan named parameters (:param) atau positional parameters (?1)
+      untuk mencegah SQL injection.
+    severity: ERROR
+    languages: [java]
+    metadata:
+      cwe:
+        - "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+      owasp:
+        - A01:2017 - Injection
+        - A03:2021 - Injection
+        - A05:2025 - Injection
+      category: security
+      technology:
+        - spring
+        - jpa
+      likelihood: HIGH
+      impact: HIGH
+      confidence: HIGH
+      subcategory:
+        - vuln

@@ -1,0 +1,35 @@
+# =============================================================================
+# .semgrepignore - Exclude paths from Semgrep scanning
+# =============================================================================
+
+# Build artifacts & dependencies
+target/
+build/
+.gradle/
+.mvn/
+node_modules/
+
+# Generated code (Lombok, MapStruct, etc.)
+**/generated/**
+**/generated-sources/**
+**/generated-test-sources/**
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Test files (less strict scanning - handled separately)
+**/src/test/**
+
+# Static resources
+**/src/main/resources/static/**
+**/src/main/resources/templates/**
+
+# Load test scripts
+loadtests/
+
+# Config & docs
+*.md
+*.txt
+LICENSE

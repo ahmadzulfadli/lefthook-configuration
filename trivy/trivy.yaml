@@ -1,0 +1,46 @@
+# =============================================================================
+# Trivy Configuration - trivy.yaml (Trivy v0.72.0)
+# Reference: https://trivy.dev/latest/docs/references/configuration/config-file/
+# =============================================================================
+
+# --- Report options (top-level) ---
+severity:
+  - HIGH
+  - CRITICAL
+
+format: "table"
+exit-code: 1
+
+# --- Scan options ---
+scan:
+  scanners:
+    - vuln
+    - secret
+#    - misconfig
+
+  skip-dirs:
+    - .idea
+    - .mvn
+    - .github
+    - .git
+    - node_modules
+    - target/classes
+    - target/test-classes
+    - loadtests
+
+  skip-files:
+    - "mvnw"
+    - "mvnw.cmd"
+    - "Dockerfile"
+
+# --- Package options (replaces deprecated vulnerability.type) ---
+pkg:
+  types:
+    - os
+    - library
+
+# --- Misconfiguration options ---
+#misconfiguration:
+#  scanners:
+#    - dockerfile
+#    - kubernetes

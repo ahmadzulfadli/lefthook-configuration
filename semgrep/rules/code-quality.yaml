@@ -1,0 +1,42 @@
+# =============================================================================
+# Semgrep Custom Rules - Code Quality & Error Handling
+# Untuk Java/Spring Boot projects
+# Ref: - https://cwe.mitre.org/data/definitions/390.html
+#      - https://docs.semgrep.dev/
+# =============================================================================
+rules:
+  # ---------------------------------------------------------------------------
+  # Empty catch block
+  # ---------------------------------------------------------------------------
+  - id: java-empty-catch-block
+    patterns:
+      - pattern: |
+          try { ... } catch ($TYPE $EX) { }
+    message: >
+      Empty catch block. Minimal log exception atau re-throw.
+      Silent failures menyulitkan debugging di production.
+    severity: WARNING
+    languages: [java]
+    metadata:
+      cwe: "CWE-390"
+      confidence: HIGH
+
+  # ---------------------------------------------------------------------------
+  # System.out/err instead of logger
+  # ---------------------------------------------------------------------------
+  - id: java-use-logger-not-sysout
+    patterns:
+      - pattern-either:
+          - pattern: |
+              System.out.println(...);
+          - pattern: |
+              System.err.println(...);
+          - pattern: |
+              $EX.printStackTrace();
+    message: >
+      Gunakan SLF4J/Logback logger daripada System.out/err atau printStackTrace().
+      Logger memberikan level, format, dan output control yang proper.
+    severity: WARNING
+    languages: [java]
+    metadata:
+      confidence: HIGH

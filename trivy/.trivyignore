@@ -1,0 +1,21 @@
+# =============================================================================
+# .trivyignore - Suppress specific CVEs/findings after risk assessment
+# =============================================================================
+# Format: CVE-ID atau finding ID, satu per baris
+# PENTING: Setiap entry HARUS punya justifikasi dan ticket reference
+#
+# Template:
+# CVE-XXXX-XXXXX  # [TICKET-123] Justifikasi: alasan kenapa di-ignore
+# =============================================================================
+
+# --- Accepted Risks ---
+# Tambahkan CVE yang sudah di-review dan diterima risikonya di sini.
+# Contoh:
+# CVE-2023-12345  # [SEC-001] False positive: library tidak digunakan di code path yang vuln
+# CVE-2024-67890  # [SEC-002] Mitigated: sudah ada WAF rule yang block exploit ini
+
+# --- Spring Boot DevTools (development only, tidak masuk production) ---
+# Jika ada CVE terkait devtools, bisa di-ignore karena scope=runtime,optional
+
+# --- Test Dependencies ---
+# CVE pada test-scope dependencies bisa di-assess terpisah
