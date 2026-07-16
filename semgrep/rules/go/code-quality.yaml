@@ -1,0 +1,183 @@
+# =============================================================================
+# Semgrep Custom Rules - Code Quality & Error Handling (Go)
+# Untuk Go projects
+# Ref: - https://go.dev/doc/effective_go
+#      - https://go.dev/blog/error-handling-and-go
+# =============================================================================
+rules:
+  # ---------------------------------------------------------------------------
+  # Ignored error (blank identifier for error)
+  # ---------------------------------------------------------------------------
+  - id: go-ignored-error
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $VAL, _ := $FUNC(...)
+          - pattern: |
+              _, _ = $FUNC(...)
+      - pattern-not: |
+          $VAL, _ := os.LookupEnv(...)
+      - pattern-not: |
+          $VAL, _ := $MAP[$KEY]
+      - pattern-not-inside: |
+          // nolint
+          ...
+    message: >
+      Error dari '$FUNC(...)' diabaikan menggunakan blank identifier.
+      Selalu handle error minimal dengan logging. Silent failures menyulitkan
+      debugging di production. Jika memang intentional, tambahkan komentar.
+    severity: WARNING
+    languages: [go]
+    metadata:
+      cwe:
+        - "CWE-390: Detection of Error Condition Without Action"
+      references:
+        - https://go.dev/blog/error-handling-and-go
+        - https://go.dev/doc/effective_go#errors
+      category: best-practice
+      technology:
+        - go
+      confidence: MEDIUM
+      subcategory:
+        - audit
+
+  # ---------------------------------------------------------------------------
+  # Use structured logger instead of fmt.Println/log.Println
+  # ---------------------------------------------------------------------------
+  - id: go-use-structured-logger
+    patterns:
+      - pattern-either:
+          - pattern: fmt.Println(...)
+          - pattern: fmt.Printf(...)
+          - pattern: fmt.Fprintf(os.Stdout, ...)
+          - pattern: fmt.Fprintf(os.Stderr, ...)
+          - pattern: log.Println(...)
+          - pattern: log.Printf(...)
+          - pattern: log.Fatal(...)
+          - pattern: log.Fatalf(...)
+      - pattern-not-inside: |
+          func main() {
+            ...
+          }
+      - pattern-not-inside: |
+          func TestMain(...) {
+            ...
+          }
+    message: >
+      Gunakan structured logger (zerolog, zap, slog) daripada fmt.Print* atau
+      log.Print* untuk production code. Structured logging memberikan level,
+      format JSON, dan context fields yang proper untuk observability.
+    severity: WARNING
+    languages: [go]
+    metadata:
+      references:
+        - https://pkg.go.dev/log/slog
+        - https://github.com/rs/zerolog
+        - https://github.com/uber-go/zap
+      category: best-practice
+      technology:
+        - go
+      confidence: MEDIUM
+      subcategory:
+        - audit
+
+  # ---------------------------------------------------------------------------
+  # Defer in loop (potential resource leak)
+  # ---------------------------------------------------------------------------
+  - id: go-defer-in-loop
+    patterns:
+      - pattern-inside: |
+          for ... {
+            ...
+          }
+      - pattern: defer $FUNC(...)
+    message: >
+      'defer' di dalam loop tidak akan dieksekusi sampai fungsi selesai,
+      bukan pada setiap iterasi. Ini bisa menyebabkan resource leak
+      (file handles, connections, locks). Pertimbangkan untuk memanggil
+      cleanup secara eksplisit atau wrap dalam fungsi anonim.
+    severity: WARNING
+    languages: [go]
+    metadata:
+      cwe:
+        - "CWE-404: Improper Resource Shutdown or Release"
+      references:
+        - https://go.dev/doc/effective_go#defer
+      category: best-practice
+      technology:
+        - go
+      likelihood: MEDIUM
+      impact: MEDIUM
+      confidence: HIGH
+      subcategory:
+        - vuln
+
+  # ---------------------------------------------------------------------------
+  # Goroutine without recover (panic can crash entire program)
+  # ---------------------------------------------------------------------------
+  - id: go-goroutine-without-recover
+    patterns:
+      - pattern: |
+          go func(...) {
+            ...
+          }(...)
+      - pattern-not: |
+          go func(...) {
+            defer func() {
+              ...
+              recover()
+              ...
+            }()
+            ...
+          }(...)
+      - pattern-not: |
+          go func(...) {
+            defer $RECOVER(...)
+            ...
+          }(...)
+    message: >
+      Goroutine tanpa recover(). Panic yang tidak di-recover dalam goroutine
+      akan crash seluruh program. Tambahkan defer dengan recover() atau
+      gunakan wrapper function yang handle panic.
+    severity: WARNING
+    languages: [go]
+    metadata:
+      cwe:
+        - "CWE-248: Uncaught Exception"
+      references:
+        - https://go.dev/blog/defer-panic-and-recover
+      category: best-practice
+      technology:
+        - go
+      likelihood: MEDIUM
+      impact: HIGH
+      confidence: MEDIUM
+      subcategory:
+        - audit
+
+  # ---------------------------------------------------------------------------
+  # Context.Background() in HTTP handler (should use request context)
+  # ---------------------------------------------------------------------------
+  - id: go-context-background-in-handler
+    patterns:
+      - pattern: context.Background()
+      - pattern-inside: |
+          func $FUNC(..., $R *http.Request, ...) {
+            ...
+          }
+    message: >
+      Menggunakan context.Background() di dalam HTTP handler. Gunakan
+      $R.Context() agar context mengikuti lifecycle request (timeout,
+      cancellation). Ini penting untuk proper resource cleanup.
+    severity: WARNING
+    languages: [go]
+    metadata:
+      references:
+        - https://pkg.go.dev/context
+        - https://go.dev/blog/context
+      category: best-practice
+      technology:
+        - go
+      confidence: HIGH
+      subcategory:
+        - audit

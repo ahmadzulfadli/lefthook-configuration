@@ -2,6 +2,18 @@
 # .semgrepignore - Exclude paths from Semgrep scanning
 # =============================================================================
 
+# ==== Common ====
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Config & docs
+*.md
+*.txt
+LICENSE
+
+# ==== Java/Spring Boot ====
 # Build artifacts & dependencies
 target/
 build/
@@ -14,11 +26,6 @@ node_modules/
 **/generated-sources/**
 **/generated-test-sources/**
 
-# IDE files
-.idea/
-.vscode/
-*.iml
-
 # Test files (less strict scanning - handled separately)
 **/src/test/**
 
@@ -29,7 +36,20 @@ node_modules/
 # Load test scripts
 loadtests/
 
-# Config & docs
-*.md
-*.txt
-LICENSE
+# ==== Go ====
+# Dependencies (vendored)
+vendor/
+
+# Generated code (protobuf, mockgen, etc.)
+**/mock_*.go
+**/mocks/
+**/*.pb.go
+**/*_generated.go
+
+# Test fixtures & testdata
+**/testdata/
+**/testfixtures/
+
+# Build output
+bin/
+dist/

@@ -1,5 +1,6 @@
 # =============================================================================
 # Trivy Configuration - trivy.yaml (Trivy v0.72.0)
+# Supported languages: Java/Spring Boot, Go
 # Reference: https://trivy.dev/latest/docs/references/configuration/config-file/
 # =============================================================================
 
@@ -19,19 +20,38 @@ scan:
   #    - misconfig
 
   skip-dirs:
+    # Common
     - .idea
-    - .mvn
+    - .vscode
     - .github
     - .git
     - node_modules
+
+    # Java/Maven/Gradle
+    - .mvn
     - target/classes
     - target/test-classes
     - loadtests
 
+    # Go
+    - vendor
+    - bin
+    - dist
+    - testdata
+    - mocks
+
   skip-files:
+    # Java/Maven
     - "mvnw"
     - "mvnw.cmd"
+
+    # Common
     - "Dockerfile"
+
+    # Go - generated files
+    - "**/*.pb.go"
+    - "**/*_generated.go"
+    - "**/mock_*.go"
 
 # --- Package options (replaces deprecated vulnerability.type) ---
 pkg:

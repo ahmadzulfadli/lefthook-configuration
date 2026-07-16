@@ -1,6 +1,7 @@
 # =============================================================================
 # Lefthook Remote Configuration - Pre-commit Hooks
-# Tools: Semgrep (SAST) + Trivy (Vulnerability Scanner) + Maven Test
+# Tools: Semgrep (SAST) + Trivy (Vulnerability Scanner)
+# Supported languages: Java/Spring Boot, Go
 # This file is referenced by consumer projects via Lefthook remotes.
 # =============================================================================
 
@@ -10,9 +11,10 @@ pre-commit:
   commands:
     # -------------------------------------------------------------------------
     # Semgrep - Static Application Security Testing (SAST)
+    # Scans all supported languages using per-language rule folders
     # -------------------------------------------------------------------------
     semgrep:
-      glob: "*.{java,xml,yml,yaml,properties}"
+      glob: "*.{java,go,xml,yml,yaml,properties,mod,sum}"
       run: >
         semgrep scan
         --config .git/info/lefthook-remotes/lefthook-configuration-master/semgrep/rules/
@@ -36,25 +38,26 @@ pre-commit:
         --exclude=".vscode"
         --exclude="**/src/test/**"
         --exclude="loadtests"
+        --exclude="vendor"
+        --exclude="**/mock_*.go"
+        --exclude="**/mocks"
+        --exclude="**/*.pb.go"
+        --exclude="**/*_generated.go"
+        --exclude="**/testdata"
+        --exclude="bin"
+        --exclude="dist"
         {staged_files}
       fail_text: "Semgrep found security issues! Fix findings above before committing."
 
     # -------------------------------------------------------------------------
     # Trivy - Vulnerability & Secret Scanner
+    # Scans dependencies (pom.xml, go.sum, etc.) and detects leaked secrets
     # -------------------------------------------------------------------------
     trivy:
-      glob: "*.{java,xml,properties,gradle,yml,yaml,Dockerfile}"
+      glob: "*.{java,go,xml,properties,gradle,yml,yaml,mod,sum,Dockerfile}"
       run: >
         trivy fs
         --config .git/info/lefthook-remotes/lefthook-configuration-master/trivy/trivy.yaml
         --ignorefile .git/info/lefthook-remotes/lefthook-configuration-master/trivy/.trivyignore
         .
       fail_text: "Trivy found HIGH/CRITICAL vulnerabilities or secrets! Review findings above. If false positive, add to .trivyignore with justification."
-
-    # -------------------------------------------------------------------------
-    # Maven Test - Unit tests
-    # -------------------------------------------------------------------------
-    # test:
-    #   glob: "*.{java,xml}"
-    #   run: mvn test -q -B
-    #   fail_text: "Unit tests failed! Run `mvn test` to see details."

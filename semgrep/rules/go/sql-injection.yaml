@@ -1,0 +1,171 @@
+# =============================================================================
+# Semgrep Custom Rules - SQL Injection Prevention (Go)
+# Untuk Go projects (net/http, Gin, Echo, Fiber, GORM, sqlx, database/sql)
+# Ref: https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html
+# =============================================================================
+rules:
+  # ---------------------------------------------------------------------------
+  # Taint-based SQL Injection Detection
+  # Melacak data flow dari HTTP request input ke SQL query execution
+  # ---------------------------------------------------------------------------
+  - id: go-tainted-sql-injection
+    languages:
+      - go
+    severity: ERROR
+    message: >
+      User input flows into a SQL query string. This is a potential SQL injection
+      vulnerability. Use parameterized queries with placeholders ($1, ?, @param)
+      instead of string concatenation or fmt.Sprintf for SQL construction.
+    metadata:
+      cwe:
+        - "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+      owasp:
+        - A01:2017 - Injection
+        - A03:2021 - Injection
+        - A05:2025 - Injection
+      references:
+        - https://pkg.go.dev/database/sql
+        - https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html
+        - https://go.dev/doc/database/sql-injection
+      category: security
+      technology:
+        - go
+        - database-sql
+        - gorm
+        - sqlx
+      cwe2022-top25: true
+      cwe2021-top25: true
+      subcategory:
+        - vuln
+      likelihood: HIGH
+      impact: HIGH
+      confidence: MEDIUM
+      interfile: true
+    options:
+      taint_assume_safe_numbers: true
+      taint_assume_safe_booleans: true
+      interfile: true
+    mode: taint
+    pattern-sources:
+      # --- net/http ---
+      - patterns:
+          - pattern-either:
+              - pattern: $R.URL.Query().Get("...")
+              - pattern: $R.FormValue("...")
+              - pattern: $R.PostFormValue("...")
+              - pattern: $R.Header.Get("...")
+              - pattern: $R.PathValue("...")
+          - pattern-inside: |
+              func $FUNC(..., $R *http.Request, ...) {
+                ...
+              }
+      # --- Gin ---
+      - patterns:
+          - pattern-either:
+              - pattern: $C.Query("...")
+              - pattern: $C.DefaultQuery("...", ...)
+              - pattern: $C.Param("...")
+              - pattern: $C.PostForm("...")
+              - pattern: $C.GetHeader("...")
+          - pattern-inside: |
+              func $FUNC($C *gin.Context) {
+                ...
+              }
+      # --- Echo ---
+      - patterns:
+          - pattern-either:
+              - pattern: $C.QueryParam("...")
+              - pattern: $C.Param("...")
+              - pattern: $C.FormValue("...")
+          - pattern-inside: |
+              func $FUNC($C echo.Context) $RET {
+                ...
+              }
+      # --- Fiber ---
+      - patterns:
+          - pattern-either:
+              - pattern: $C.Query("...")
+              - pattern: $C.Params("...")
+              - pattern: $C.FormValue("...")
+          - pattern-inside: |
+              func $FUNC($C *fiber.Ctx) error {
+                ...
+              }
+      # --- gorilla/mux ---
+      - pattern: mux.Vars($R)["..."]
+      # --- chi ---
+      - pattern: chi.URLParam($R, "...")
+    pattern-sinks:
+      # ----- fmt.Sprintf used for SQL construction -----
+      - patterns:
+          - pattern: fmt.Sprintf($QUERY, ...)
+          - metavariable-regex:
+              metavariable: $QUERY
+              regex: (?i).*(SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE)\b.*
+      # ----- String concatenation for SQL -----
+      - patterns:
+          - pattern: $PREFIX + $TAINTED
+          - metavariable-regex:
+              metavariable: $PREFIX
+              regex: (?i).*(SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE)\b.*
+      # ----- database/sql sinks -----
+      - pattern: $DB.Query($QUERY, ...)
+      - pattern: $DB.QueryRow($QUERY, ...)
+      - pattern: $DB.Exec($QUERY, ...)
+      - pattern: $DB.QueryContext($CTX, $QUERY, ...)
+      - pattern: $DB.QueryRowContext($CTX, $QUERY, ...)
+      - pattern: $DB.ExecContext($CTX, $QUERY, ...)
+      # ----- sqlx sinks -----
+      - pattern: $DB.Select($DEST, $QUERY, ...)
+      - pattern: $DB.Get($DEST, $QUERY, ...)
+      - pattern: $DB.MustExec($QUERY, ...)
+      - pattern: $DB.NamedExec($QUERY, ...)
+      - pattern: $DB.Queryx($QUERY, ...)
+      # ----- GORM raw query sinks -----
+      - pattern: $DB.Raw($QUERY, ...).Scan(...)
+      - pattern: $DB.Exec($QUERY, ...)
+      - pattern: $DB.Where($QUERY, ...).Find(...)
+    pattern-sanitizers:
+      - pattern: strconv.Atoi(...)
+      - pattern: strconv.ParseInt(...)
+      - pattern: strconv.ParseFloat(...)
+      - pattern: strconv.ParseBool(...)
+      - patterns:
+          - pattern: regexp.MustCompile($RE).ReplaceAllString($X, ...)
+          - metavariable-regex:
+              metavariable: $RE
+              regex: .*[^a-zA-Z0-9].*
+
+  # ---------------------------------------------------------------------------
+  # Direct string formatting in SQL query (non-taint, simpler detection)
+  # ---------------------------------------------------------------------------
+  - id: go-sql-string-formatting
+    patterns:
+      - pattern-either:
+          - pattern: $DB.Query(fmt.Sprintf("...", ...), ...)
+          - pattern: $DB.QueryRow(fmt.Sprintf("...", ...), ...)
+          - pattern: $DB.Exec(fmt.Sprintf("...", ...), ...)
+          - pattern: $DB.Raw(fmt.Sprintf("...", ...))
+          - pattern: $DB.Where(fmt.Sprintf("...", ...))
+    message: >
+      SQL query menggunakan fmt.Sprintf untuk konstruksi string. Ini rentan
+      terhadap SQL injection. Gunakan parameterized query dengan placeholder
+      ($1 untuk PostgreSQL, ? untuk MySQL).
+    severity: ERROR
+    languages: [go]
+    metadata:
+      cwe:
+        - "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+      owasp:
+        - A03:2021 - Injection
+        - A05:2025 - Injection
+      category: security
+      technology:
+        - go
+        - database-sql
+        - gorm
+      likelihood: HIGH
+      impact: HIGH
+      confidence: HIGH
+      subcategory:
+        - vuln

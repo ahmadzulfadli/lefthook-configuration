@@ -60,52 +60,13 @@ Create a `lefthook.yml` file in your Java/Spring Boot project root:
 ```yaml
 # lefthook.yml
 remotes:
-  - git_url: https://github.com/<org>/lefthook-tools.git
-    ref: main
+  - git_url: https://github.com/ahmadzulfadli/lefthook-configuration.git
+    ref: master
     configs:
       - lefthook-remote.yml
 ```
 
-> **Note:** Replace `<org>` with the GitHub organization/user hosting this repository.
-
-### 3. Create Remote Config
-
-Create a `lefthook-remote.yml` file in the root of this repository (the file referenced by consumers):
-
-```yaml
-# lefthook-remote.yml
-pre-commit:
-  commands:
-    semgrep-security:
-      glob: "*.java"
-      run: >
-        semgrep
-        --config {remote}/semgrep/rules/sql-injection.yaml
-        --config {remote}/semgrep/rules/secrets.yaml
-        --error
-        --no-git-ignore
-        {staged_files}
-      stage_fixed: true
-
-    semgrep-quality:
-      glob: "*.java"
-      run: >
-        semgrep
-        --config {remote}/semgrep/rules/code-quality.yaml
-        --error
-        --no-git-ignore
-        {staged_files}
-      stage_fixed: true
-
-    trivy-scan:
-      run: >
-        trivy fs
-        --config {remote}/trivy/trivy.yaml
-        --ignorefile {remote}/trivy/.trivyignore
-        .
-```
-
-### 4. Activate in Consumer Project
+### 3. Activate in Consumer Project
 
 ```bash
 cd /path/to/your-java-project
@@ -186,55 +147,6 @@ CVE-XXXX-XXXXX  # [TICKET-123] Justification: reason for ignoring
 - **Single update** — Update rules in one place, automatically applied to all projects
 - **Versioning** — Use `ref: v1.0.0` to pin a specific version
 - **Enforcement** — Git hooks ensure code is scanned before commit
-
-## Manual Usage (Without Lefthook)
-
-To run tools directly:
-
-```bash
-# Semgrep - all rules
-semgrep --config semgrep/rules/ /path/to/project
-
-# Semgrep - specific rule
-semgrep --config semgrep/rules/sql-injection.yaml /path/to/project
-
-# Trivy - filesystem scan
-trivy fs --config trivy/trivy.yaml --ignorefile trivy/.trivyignore /path/to/project
-```
-
-## Customization
-
-### Project-Level Override
-
-Consumer projects can add local rules or override behavior:
-
-```yaml
-# lefthook.yml (in consumer project)
-remotes:
-  - git_url: https://github.com/<org>/lefthook-tools.git
-    ref: main
-    configs:
-      - lefthook-remote.yml
-
-pre-commit:
-  commands:
-    # Additional local rule
-    semgrep-local:
-      glob: "*.java"
-      run: semgrep --config .semgrep/local-rules.yaml --error {staged_files}
-```
-
-### Pin Version
-
-For production stability, pin to a specific tag/commit:
-
-```yaml
-remotes:
-  - git_url: https://github.com/<org>/lefthook-tools.git
-    ref: v1.0.0  # or commit SHA
-    configs:
-      - lefthook-remote.yml
-```
 
 ## Contributing
 

@@ -1,5 +1,5 @@
 # =============================================================================
-# Semgrep Custom Rules - SQL Injection Prevention (Combined)
+# Semgrep Custom Rules - SQL Injection Prevention
 # Untuk Java/Spring Boot projects
 # Menggabungkan taint analysis dengan cakupan JPA/Spring Data sinks
 # Ref: https://github.com/semgrep/semgrep-rules/blob/develop/java/spring/security/injection/tainted-sql-string.yaml
