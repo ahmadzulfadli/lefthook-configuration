@@ -26,7 +26,7 @@ rules:
       Error dari '$FUNC(...)' diabaikan menggunakan blank identifier.
       Selalu handle error minimal dengan logging. Silent failures menyulitkan
       debugging di production. Jika memang intentional, tambahkan komentar.
-    severity: WARNING
+    severity: ERROR
     languages: [go]
     metadata:
       cwe:
@@ -67,7 +67,7 @@ rules:
       Gunakan structured logger (zerolog, zap, slog) daripada fmt.Print* atau
       log.Print* untuk production code. Structured logging memberikan level,
       format JSON, dan context fields yang proper untuk observability.
-    severity: WARNING
+    severity: ERROR
     languages: [go]
     metadata:
       references:
@@ -96,7 +96,7 @@ rules:
       bukan pada setiap iterasi. Ini bisa menyebabkan resource leak
       (file handles, connections, locks). Pertimbangkan untuk memanggil
       cleanup secara eksplisit atau wrap dalam fungsi anonim.
-    severity: WARNING
+    severity: ERROR
     languages: [go]
     metadata:
       cwe:
@@ -139,7 +139,7 @@ rules:
       Goroutine tanpa recover(). Panic yang tidak di-recover dalam goroutine
       akan crash seluruh program. Tambahkan defer dengan recover() atau
       gunakan wrapper function yang handle panic.
-    severity: WARNING
+    severity: ERROR
     languages: [go]
     metadata:
       cwe:
@@ -169,7 +169,7 @@ rules:
       Menggunakan context.Background() di dalam HTTP handler. Gunakan
       $R.Context() agar context mengikuti lifecycle request (timeout,
       cancellation). Ini penting untuk proper resource cleanup.
-    severity: WARNING
+    severity: ERROR
     languages: [go]
     metadata:
       references:

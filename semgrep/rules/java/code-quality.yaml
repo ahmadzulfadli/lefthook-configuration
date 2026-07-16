@@ -15,7 +15,7 @@ rules:
     message: >
       Empty catch block. Minimal log exception atau re-throw.
       Silent failures menyulitkan debugging di production.
-    severity: WARNING
+    severity: ERROR
     languages: [java]
     metadata:
       cwe: "CWE-390"
@@ -36,7 +36,7 @@ rules:
     message: >
       Gunakan SLF4J/Logback logger daripada System.out/err atau printStackTrace().
       Logger memberikan level, format, dan output control yang proper.
-    severity: WARNING
+    severity: ERROR
     languages: [java]
     metadata:
       confidence: HIGH
