@@ -18,8 +18,13 @@ pre-commit:
         --config .git/info/lefthook-remotes/lefthook-configuration-master/semgrep/rules/
         --error
         --severity ERROR
-        --timeout 60
+        --timeout 30
+        --timeout-threshold 3
+        --max-memory 2048
+        --max-target-bytes 1000000
+        --jobs 2
         --no-git-ignore
+        --force-color
         --exclude="target"
         --exclude="build"
         --exclude=".gradle"
