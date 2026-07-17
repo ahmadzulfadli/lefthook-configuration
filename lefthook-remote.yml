@@ -6,14 +6,26 @@
 # =============================================================================
 
 pre-commit:
-  parallel: true
+  parallel: false
 
   commands:
+    # -------------------------------------------------------------------------
+    # Sync Remote - Update rules from central repository before scanning
+    # Fetches latest config without running lefthook install (avoids recursion)
+    # -------------------------------------------------------------------------
+    sync-remote:
+      priority: 1
+      run: >
+        git -C .git/info/lefthook-remotes/lefthook-configuration-master
+        pull --ff-only origin master 2>nul || echo "Remote sync skipped (offline or unchanged)"
+      fail_text: ""
+
     # -------------------------------------------------------------------------
     # Semgrep - Static Application Security Testing (SAST)
     # Scans all supported languages using per-language rule folders
     # -------------------------------------------------------------------------
     semgrep:
+      priority: 2
       glob: "*.{java,go,xml,yml,yaml,properties,mod,sum}"
       run: >
         semgrep scan
@@ -54,6 +66,7 @@ pre-commit:
     # Scans dependencies (pom.xml, go.sum, etc.) and detects leaked secrets
     # -------------------------------------------------------------------------
     trivy:
+      priority: 2
       glob: "*.{java,go,xml,properties,gradle,yml,yaml,mod,sum,Dockerfile}"
       run: >
         trivy fs
