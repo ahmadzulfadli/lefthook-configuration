@@ -66,7 +66,7 @@ pre-commit:
     # Scans dependencies (pom.xml, go.sum, etc.) and detects leaked secrets
     # -------------------------------------------------------------------------
     trivy:
-      priority: 2
+      priority: 3
       glob: "*.{java,go,xml,properties,gradle,yml,yaml,mod,sum,Dockerfile}"
       run: >
         trivy fs
