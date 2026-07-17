@@ -1,6 +1,6 @@
 # =============================================================================
 # Semgrep Custom Rules - Code Quality & Error Handling
-# Untuk Java/Spring Boot projects
+# For Java/Spring Boot projects
 # Ref: - https://cwe.mitre.org/data/definitions/390.html
 #      - https://docs.semgrep.dev/
 # =============================================================================
@@ -13,8 +13,8 @@ rules:
       - pattern: |
           try { ... } catch ($TYPE $EX) { }
     message: >
-      Empty catch block. Minimal log exception atau re-throw.
-      Silent failures menyulitkan debugging di production.
+      Empty catch block detected. At minimum, log the exception or re-throw it.
+      Silent failures make debugging in production extremely difficult.
     severity: ERROR
     languages: [java]
     metadata:
@@ -34,8 +34,8 @@ rules:
           - pattern: |
               $EX.printStackTrace();
     message: >
-      Gunakan SLF4J/Logback logger daripada System.out/err atau printStackTrace().
-      Logger memberikan level, format, dan output control yang proper.
+      Use SLF4J/Logback logger instead of System.out/err or printStackTrace().
+      A proper logger provides log levels, formatting, and output control.
     severity: ERROR
     languages: [java]
     metadata:

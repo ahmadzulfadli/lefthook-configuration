@@ -1,6 +1,6 @@
 # =============================================================================
 # Semgrep Custom Rules - Code Quality & Error Handling (Go)
-# Untuk Go projects
+# For Go projects
 # Ref: - https://go.dev/doc/effective_go
 #      - https://go.dev/blog/error-handling-and-go
 # =============================================================================
@@ -23,9 +23,9 @@ rules:
           // nolint
           ...
     message: >
-      Error dari '$FUNC(...)' diabaikan menggunakan blank identifier.
-      Selalu handle error minimal dengan logging. Silent failures menyulitkan
-      debugging di production. Jika memang intentional, tambahkan komentar.
+      Error from '$FUNC(...)' is ignored using blank identifier.
+      Always handle errors at minimum with logging. Silent failures make
+      debugging in production difficult. If intentional, add a comment.
     severity: ERROR
     languages: [go]
     metadata:
@@ -64,9 +64,9 @@ rules:
             ...
           }
     message: >
-      Gunakan structured logger (zerolog, zap, slog) daripada fmt.Print* atau
-      log.Print* untuk production code. Structured logging memberikan level,
-      format JSON, dan context fields yang proper untuk observability.
+      Use a structured logger (zerolog, zap, slog) instead of fmt.Print* or
+      log.Print* for production code. Structured logging provides log levels,
+      JSON format, and proper context fields for observability.
     severity: ERROR
     languages: [go]
     metadata:
@@ -92,10 +92,10 @@ rules:
           }
       - pattern: defer $FUNC(...)
     message: >
-      'defer' di dalam loop tidak akan dieksekusi sampai fungsi selesai,
-      bukan pada setiap iterasi. Ini bisa menyebabkan resource leak
-      (file handles, connections, locks). Pertimbangkan untuk memanggil
-      cleanup secara eksplisit atau wrap dalam fungsi anonim.
+      'defer' inside a loop will not execute until the function returns,
+      not on each iteration. This can cause resource leaks
+      (file handles, connections, locks). Consider calling cleanup explicitly
+      or wrapping in an anonymous function.
     severity: ERROR
     languages: [go]
     metadata:
@@ -136,9 +136,9 @@ rules:
             ...
           }(...)
     message: >
-      Goroutine tanpa recover(). Panic yang tidak di-recover dalam goroutine
-      akan crash seluruh program. Tambahkan defer dengan recover() atau
-      gunakan wrapper function yang handle panic.
+      Goroutine without recover(). An unrecovered panic in a goroutine
+      will crash the entire program. Add defer with recover() or
+      use a wrapper function that handles panics.
     severity: ERROR
     languages: [go]
     metadata:
@@ -166,9 +166,9 @@ rules:
             ...
           }
     message: >
-      Menggunakan context.Background() di dalam HTTP handler. Gunakan
-      $R.Context() agar context mengikuti lifecycle request (timeout,
-      cancellation). Ini penting untuk proper resource cleanup.
+      Using context.Background() inside an HTTP handler. Use $R.Context()
+      so the context follows the request lifecycle (timeout, cancellation).
+      This is important for proper resource cleanup.
     severity: ERROR
     languages: [go]
     metadata:

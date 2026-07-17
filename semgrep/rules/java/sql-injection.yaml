@@ -1,13 +1,13 @@
 # =============================================================================
 # Semgrep Custom Rules - SQL Injection Prevention
-# Untuk Java/Spring Boot projects
-# Menggabungkan taint analysis dengan cakupan JPA/Spring Data sinks
+# For Java/Spring Boot projects
+# Combines taint analysis with JPA/Spring Data sink coverage
 # Ref: https://github.com/semgrep/semgrep-rules/blob/develop/java/spring/security/injection/tainted-sql-string.yaml
 # =============================================================================
 rules:
   # ---------------------------------------------------------------------------
   # Taint-based SQL Injection Detection
-  # Melacak data flow dari user input ke SQL construction/execution
+  # Tracks data flow from user input to SQL construction/execution
   # ---------------------------------------------------------------------------
   - id: tainted-sql-injection
     languages:
@@ -165,7 +165,7 @@ rules:
 
   # ---------------------------------------------------------------------------
   # Spring Data @Query with concatenation (annotation-level detection)
-  # Ini tidak bisa dideteksi oleh taint mode karena terjadi di level anotasi
+  # Cannot be detected by taint mode as it occurs at annotation level
   # ---------------------------------------------------------------------------
   - id: spring-data-raw-native-query
     patterns:
@@ -175,9 +175,9 @@ rules:
           - pattern: |
               @Query(value = $QUERY + $VAR + ..., nativeQuery = true)
     message: >
-      Native query in @Query annotation menggunakan string concatenation.
-      Gunakan named parameters (:param) atau positional parameters (?1)
-      untuk mencegah SQL injection.
+      Native query in @Query annotation uses string concatenation.
+      Use named parameters (:param) or positional parameters (?1)
+      to prevent SQL injection.
     severity: ERROR
     languages: [java]
     metadata:

@@ -1,12 +1,12 @@
 # =============================================================================
 # Semgrep Custom Rules - SQL Injection Prevention (Go)
-# Untuk Go projects (net/http, Gin, Echo, Fiber, GORM, sqlx, database/sql)
+# For Go projects (net/http, Gin, Echo, Fiber, GORM, sqlx, database/sql)
 # Ref: https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html
 # =============================================================================
 rules:
   # ---------------------------------------------------------------------------
   # Taint-based SQL Injection Detection
-  # Melacak data flow dari HTTP request input ke SQL query execution
+  # Tracks data flow from HTTP request input to SQL query execution
   # ---------------------------------------------------------------------------
   - id: go-tainted-sql-injection
     languages:
@@ -148,9 +148,9 @@ rules:
           - pattern: $DB.Raw(fmt.Sprintf("...", ...))
           - pattern: $DB.Where(fmt.Sprintf("...", ...))
     message: >
-      SQL query menggunakan fmt.Sprintf untuk konstruksi string. Ini rentan
-      terhadap SQL injection. Gunakan parameterized query dengan placeholder
-      ($1 untuk PostgreSQL, ? untuk MySQL).
+      SQL query uses fmt.Sprintf for string construction. This is vulnerable
+      to SQL injection. Use parameterized queries with placeholders
+      ($1 for PostgreSQL, ? for MySQL).
     severity: ERROR
     languages: [go]
     metadata:
